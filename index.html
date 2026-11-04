@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#12090F" />
+    <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!--SEO_HEAD-->
+    <!--SITE_CONTENT-->
+    <style>
+      html, body { background: #12090F; margin: 0; }
+      #boot-loader {
+        position: fixed; inset: 0; z-index: 100; display: grid; place-items: center;
+        background: radial-gradient(120% 80% at 50% 110%, #4a1238 0%, #12090F 62%);
+        transition: opacity .9s cubic-bezier(.22,.8,.24,1), visibility .9s;
+      }
+      #boot-loader.is-done { opacity: 0; visibility: hidden; }
+      #boot-loader .bl-inner { display: grid; justify-items: center; gap: 22px; }
+      #boot-loader img { width: 168px; height: auto; opacity: .95; }
+      #boot-loader .bl-line { width: 140px; height: 1px; background: rgba(255,255,255,.1); overflow: hidden; border-radius: 1px; }
+      #boot-loader .bl-line span {
+        display: block; height: 100%; width: 40%;
+        background: linear-gradient(90deg, #F7931E, #D6247A);
+        animation: bl-slide 1.4s cubic-bezier(.65,0,.35,1) infinite;
+      }
+      #boot-loader .bl-text { font: 500 10px/1 system-ui, sans-serif; letter-spacing: .32em; text-transform: uppercase; color: rgba(247,238,233,.5); }
+      @keyframes bl-slide { from { transform: translateX(-110%); } to { transform: translateX(260%); } }
+      @media (prefers-reduced-motion: reduce) { #boot-loader .bl-line span { animation: none; width: 100%; } }
+    </style>
+    <noscript><style>#boot-loader { display: none; }</style></noscript>
+  </head>
+  <body>
+    <div id="boot-loader" role="status" aria-label="Loading">
+      <div class="bl-inner">
+        <img src="/logo.png" alt="" width="159" height="42" />
+        <div class="bl-line"><span></span></div>
+        <div class="bl-text">IRIS Bay Tower · Business Bay</div>
+      </div>
+    </div>
+    <div id="root"><!--SEO_STATIC--></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

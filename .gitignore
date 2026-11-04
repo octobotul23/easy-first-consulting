@@ -1,0 +1,11 @@
+node_modules
+dist
+dist-demo
+easy-first-consulting-demo.zip
+data
+*.local
+.env
+.DS_Store
+.playwright-mcp
+server/build
+.test-data
