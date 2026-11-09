@@ -1,0 +1,41 @@
+{
+  "name": "easy-first-tower",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build && vite build --ssr src/server/entry.ts",
+    "build:demo": "tsc -p tsconfig.json && vite build --mode demo",
+    "demo": "npm run build:demo && node scripts/pack-demo.mjs",
+    "vps": "npm run build && node scripts/pack-vps.mjs",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json",
+    "serve": "node server/server.mjs",
+    "admin:create": "node server/manage.mjs create-admin",
+    "admin:password": "node server/manage.mjs reset-password",
+    "admin:list": "node server/manage.mjs list-admins",
+    "admin:remove": "node server/manage.mjs remove-admin"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource/cormorant-garamond": "^5.3.0",
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.2",
+    "gsap": "^3.15.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.4",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.187.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "tailwindcss": "^4.3.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  }
+}

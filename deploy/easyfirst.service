@@ -1,0 +1,29 @@
+# systemd unit for the Easy First site and its admin panel. deploy/install.sh fills in __ORIGIN__
+# and copies it to /etc/systemd/system/easyfirst.service.
+[Unit]
+Description=Easy First site and admin panel
+After=network.target
+
+[Service]
+Type=simple
+User=easyfirst
+WorkingDirectory=/var/www/easyfirst
+ExecStart=/usr/bin/node server/server.mjs
+Restart=on-failure
+Environment=NODE_ENV=production
+# Only nginx talks to Node; visitors reach it through HTTPS.
+Environment=HOST=127.0.0.1
+Environment=PORT=8787
+Environment=TRUST_PROXY=1
+Environment=PUBLIC_ORIGIN=__ORIGIN__
+Environment=DATA_DIR=/var/www/easyfirst/data
+
+# Hardening: the process can write only its data folder.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/easyfirst/data
+
+[Install]
+WantedBy=multi-user.target
