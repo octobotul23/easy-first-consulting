@@ -94,6 +94,7 @@ const RULES: Record<string, Rule> = {
   'settings.groundLight': { range: [0.5, 2], step: 0.05 },
   'settings.skylineImage': { kind: 'image' },
   'settings.skylineBlur': { range: [0, 12], step: 1 },
+  'settings.deskImage': { kind: 'image' },
   // SEO of every page
   '*.seo.title': { max: 90, required: true },
   '*.seo.description': { max: 320, required: true },

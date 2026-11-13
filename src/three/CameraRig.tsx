@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { PHONE_LAYOUT, useMediaQuery } from '../hooks/useCapabilities';
 import { getStops, holdDoors, lift, onLiftFrame } from '../state/elevator';
-import { CABIN_W, CABIN_Z, FLOOR_H, FLOOR_SIGN_W, FRONT_Z, OFFICE_SIGN_W, SIGN_Z, TOWER_D, WING_X } from './constants';
+import { CABIN_W, CABIN_Z, DESK, DESK_FRAME, FLOOR_H, FLOOR_SIGN_W, FRONT_Z, OFFICE_SIGN_W, SIGN_Z, TOWER_D, WING_X } from './constants';
 
 const smooth = (t: number) => t * t * (3 - 2 * t);
 const clamp01 = (t: number) => Math.min(1, Math.max(0, t));
@@ -31,6 +31,45 @@ const ABOVE_CARD = 0.18;
 const OFFICE_NAME_HOLD = 1.6;
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
+const UP = new THREE.Vector3(0, 1, 0);
+/** How far down the camera looks at the picture on the desk of Office 902 (radians). */
+const DESK_PITCH = 0.25;
+/** Share of the free part of the screen the picture may fill. */
+const DESK_FILL = { w: 0.72, h: 0.72 };
+
+interface Area {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/**
+ * The part of the screen the contact card, the menu and the lift buttons leave free (CSS pixels), where the
+ * picture on the desk should end up: to the right of the card on computers, above it on phones.
+ */
+function freeArea(W: number, H: number): Area {
+  const rect = (sel: string) => {
+    const el = document.querySelector(sel);
+    const r = el?.getBoundingClientRect();
+    return r && r.width > 0 && r.height > 0 ? r : null;
+  };
+  const card = rect('.contact-3d .panel-card');
+  const buttons = rect('.lift-panel');
+  const header = rect('.site-header');
+  const top = header ? header.bottom + 8 : 72;
+  let right = W - 12;
+  let bottom = H - 12;
+  if (buttons && buttons.top > H * 0.6) bottom = buttons.top - 8;
+  else if (buttons && buttons.left > W * 0.6) right = buttons.left - 12;
+  if (!card) return { x: W * 0.62, y: top, w: right - W * 0.62, h: bottom - top };
+  const beside: Area = { x: card.right + 12, y: top, w: right - card.right - 12, h: bottom - top };
+  const above: Area = { x: 12, y: top, w: right - 12, h: card.top - 12 - top };
+  // The one that holds the larger picture of the frame's shape wins.
+  const fit = (a: Area) => Math.min(a.w / DESK_FRAME.w, a.h / DESK_FRAME.h);
+  return fit(beside) >= fit(above) ? beside : above;
+}
+
 /** Quadratic Bézier between p0 and p2, pulled towards p1. Writes into `out`. */
 function bezier(out: THREE.Vector3, p0: THREE.Vector3, p1: THREE.Vector3, p2: THREE.Vector3, t: number) {
   const u = 1 - t;
@@ -48,7 +87,8 @@ function bezier(out: THREE.Vector3, p0: THREE.Vector3, p1: THREE.Vector3, p2: TH
  *  - first part of the ride: flying in to the glass cabin;
  *  - then riding up with it, the cabin a little right of centre so the panels on the left never cover it;
  *  - at each floor the camera moves closer while the doors are open;
- *  - on the top stop it walks through the open cabin into Office 902 and looks out of its window.
+ *  - on the top stop it walks through the open cabin into Office 902, up to the desk facing the lift, and
+ *    ends on the framed picture on it, in the part of the screen the contact card leaves free.
  * In the phone layout (upright, card at the bottom) the camera rides further back, so the cabin and the
  * floor's name on the glass fit on the screen together: from the left for floors 1–8, swinging to the right
  * for the top floor. At a floor it tilts down so both sit above the card. With the names on the glass
@@ -67,6 +107,9 @@ export function CameraRig({ signs = true }: { signs?: boolean }) {
   const side = useRef(-1);
   /** Seconds the top stop's doors have been fully open (for OFFICE_NAME_HOLD). */
   const held = useRef(0);
+  /** The free part of the screen for the desk shot, measured on the way into the office (key: screen size). */
+  const deskArea = useRef<{ key: string; area: Area } | null>(null);
+  const size = useThree((s) => s.size);
   const v = useMemo(
     () => ({
       streetPos: new THREE.Vector3(),
@@ -78,6 +121,12 @@ export function CameraRig({ signs = true }: { signs?: boolean }) {
       look: new THREE.Vector3(),
       a: new THREE.Vector3(),
       b: new THREE.Vector3(),
+      deskPos: new THREE.Vector3(),
+      deskLook: new THREE.Vector3(),
+      pic: new THREE.Vector3(),
+      f: new THREE.Vector3(),
+      r: new THREE.Vector3(),
+      u: new THREE.Vector3(),
     }),
     [],
   );
@@ -179,14 +228,40 @@ export function CameraRig({ signs = true }: { signs?: boolean }) {
 
     const t = easeInOut(office.current);
     if (t > 0) {
-      // Curve: from the ride position, through the open cabin, into the office facing the window.
+      // Curve: from the ride position, through the open cabin, up to the desk facing the lift, ending on
+      // the picture standing on it, placed in the part of the screen the contact card leaves free.
       const oy = lift.level * FLOOR_H;
+      const { width: W, height: H } = size;
+      const key = `${W}x${H}`;
+      if (deskArea.current?.key !== key) deskArea.current = { key, area: freeArea(W, H) };
+      const area = deskArea.current.area;
+      const endFov = 40 + tall * 2;
+      const tanV = Math.tan(THREE.MathUtils.degToRad(endFov / 2));
+      const tanH = tanV * (W / Math.max(1, H));
+      // Close enough for the frame to fill most of that free part, but never nose to nose with it.
+      const dw = (DESK_FRAME.w * W) / (2 * tanH * Math.max(60, area.w * DESK_FILL.w));
+      const dh = (DESK_FRAME.h * H) / (2 * tanV * Math.max(60, area.h * DESK_FILL.h));
+      const dist = Math.min(4.2, Math.max(1.5, dw, dh));
+      v.pic.set(DESK.x, oy + DESK_FRAME.y, DESK_FRAME.z);
+      v.deskPos.set(DESK.x, oy + DESK_FRAME.y + Math.sin(DESK_PITCH) * dist, DESK_FRAME.z + Math.cos(DESK_PITCH) * dist);
+      // Turn the view so the picture sits at the middle of the free area, not of the screen.
+      const nx = ((area.x + area.w / 2) / W) * 2 - 1;
+      const ny = 1 - ((area.y + area.h / 2) / H) * 2;
+      v.f.subVectors(v.pic, v.deskPos).normalize();
+      v.r.crossVectors(v.f, UP).normalize();
+      v.u.crossVectors(v.r, v.f);
+      v.deskLook
+        .copy(v.f)
+        .addScaledVector(v.r, -nx * tanH)
+        .addScaledVector(v.u, -ny * tanV)
+        .multiplyScalar(dist)
+        .add(v.deskPos);
       v.a.set(0, oy + 1.66, CABIN_Z + 2.4);
-      v.b.set(-0.6, oy + 1.7, -0.4);
-      bezier(v.pos, v.pos.clone(), v.a, v.b, t);
-      const la = v.a.clone().set(0, oy + 1.6, -TOWER_D);
-      const lb = v.a.clone().set(-3.4, oy + 1.25, -TOWER_D / 2 - 8);
-      bezier(v.look, v.look.clone(), la, lb, t);
+      bezier(v.pos, v.pos.clone(), v.a, v.deskPos, t);
+      const la = v.b.set(0, oy + 1.4, -TOWER_D);
+      bezier(v.look, v.look.clone(), la, v.deskLook, t);
+    } else if (deskArea.current && !atTop) {
+      deskArea.current = null; // measure again next time (the card may have changed)
     }
 
     const sway = 1 - t * 0.7;

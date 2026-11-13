@@ -168,6 +168,8 @@ export interface SceneSettings {
   skylineImage: string;
   /** Blur of the skyline in pixels (0 – 12). */
   skylineBlur: number;
+  /** The framed picture on the desk of Office 902, which the camera walks up to at floor 9. Empty = the company logo. */
+  deskImage: string;
 }
 
 export interface SiteContent {

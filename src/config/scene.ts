@@ -23,4 +23,6 @@ export const scene: SceneSettings = {
   // When the video is off: put an image in /public (e.g. /skyline.jpg) or an https:// link to use a photo instead of the drawn skyline.
   skylineImage: '',
   skylineBlur: 3,
+  // The framed picture on the desk of Office 902 (floor 9): an uploaded image, a file of the site or an https:// link. Empty = the header logo.
+  deskImage: '/logo-stacked.png',
 };

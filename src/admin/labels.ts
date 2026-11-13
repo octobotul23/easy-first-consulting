@@ -197,6 +197,10 @@ const INFO: Record<string, FieldInfo> = {
     help: 'Empty = the Business Bay skyline is drawn automatically.',
   },
   'settings.skylineBlur': { label: 'Blur of the skyline (when the video is off)', unit: 'px' },
+  'settings.deskImage': {
+    label: 'Picture on the desk in Office 902',
+    help: 'When the lift opens at floor 9, the camera walks up to the desk and ends on this picture, in a frame. Any shape works: wide, tall or square. Empty = the logo from the header.',
+  },
 };
 
 const pattern = (path: Path) => path.map((p) => (typeof p === 'number' ? '*' : String(p)));

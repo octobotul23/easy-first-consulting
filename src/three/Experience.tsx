@@ -304,7 +304,14 @@ export default function Experience({ content, onReady, onFail, onSlow }: Props) 
           />
           {fontsReady && (
             <>
-              <Tower stops={stops} labels={labels} top={top} officeSign={officeSign} signs={settings.floorSigns} />
+              <Tower
+                stops={stops}
+                labels={labels}
+                top={top}
+                officeSign={officeSign}
+                signs={settings.floorSigns}
+                deskImage={media(settings.deskImage || content.company.logo)}
+              />
               <Elevator top={top} />
               {groundSettled && (
                 <Ready

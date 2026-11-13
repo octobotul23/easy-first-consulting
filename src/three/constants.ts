@@ -30,6 +30,14 @@ export const SIGN_Z = FRONT_Z + 0.15;
 export const FLOOR_SIGN_W = WING_W * 0.64;
 export const OFFICE_SIGN_W = WING_W * 0.86;
 
+/**
+ * Office 902: the desk facing the lift, in the middle of the floor (x, z of its middle; height of its top),
+ * and the framed picture standing on it, which the camera walks up to. The picture fits inside w × h
+ * (metres) whatever its shape; y is the height of its middle above the floor.
+ */
+export const DESK = { x: 0, z: -2.45, top: 0.76, w: 2.1, d: 0.95 };
+export const DESK_FRAME = { z: DESK.z - 0.12, w: 0.62, h: 0.44, y: DESK.top + 0.03 + 0.245 };
+
 /** Plain floors above the office: the tower carries on above floor 9. */
 export const EXTRA_LEVELS = 6;
 

@@ -22,6 +22,7 @@ import {
 } from './constants';
 import { additive, glassMaterial, hdr } from './glass';
 import { BOX, Instanced, PLANE, type Item, type V3 } from './Instanced';
+import { backWallOf, baseLightOf, noise, Offices, type Kind } from './Offices';
 import { glowTexture, gradientTexture, lineGlowTexture, lobbySignTexture, signTexture, splitLabel } from './textures';
 
 const HALF_PI = Math.PI / 2;
@@ -104,20 +105,8 @@ function createMaterials() {
     halo: additive(glowTex, COLORS.neonSoft, 0.5),
     haloWide: additive(glowTex, COLORS.neonWide, 0.22),
     floorWood: new THREE.MeshStandardMaterial({ color: '#3a2219', roughness: 0.22, metalness: 0, envMapIntensity: 0.8 }),
-    furniture: new THREE.MeshStandardMaterial({ color: '#2a1d22', roughness: 0.6, metalness: 0.15 }),
-    furnitureLight: new THREE.MeshStandardMaterial({ color: '#9a8070', roughness: 0.7 }),
-    leaf: new THREE.MeshStandardMaterial({ color: '#2d4a32', roughness: 0.8 }),
   };
 }
-type TowerMaterials = ReturnType<typeof createMaterials>;
-
-type Kind = 'lobby' | 'floor' | 'hidden' | 'office' | 'extra';
-
-/** Deterministic 0..1 noise per floor and wing, so the upper floors look randomly occupied. */
-const noise = (l: number, w: number) => {
-  const x = Math.sin(l * 12.9898 + w * 78.233) * 43758.5453;
-  return x - Math.floor(x);
-};
 
 interface Props {
   stops: Stop[];
@@ -127,9 +116,11 @@ interface Props {
   top: number;
   officeSign: string;
   signs: boolean;
+  /** The picture on the desk of Office 902 (an address the browser can load). */
+  deskImage: string;
 }
 
-export function Tower({ stops, labels, top, officeSign, signs }: Props) {
+export function Tower({ stops, labels, top, officeSign, signs, deskImage }: Props) {
   const roof = top + EXTRA_LEVELS + 1;
   const totalH = roof * FLOOR_H;
 
@@ -144,14 +135,7 @@ export function Tower({ stops, labels, top, officeSign, signs }: Props) {
   }, [stops, roof, top]);
 
   /** How bright the warm interior light of each floor is, before the lift highlights it. */
-  const baseLight = (l: number, wing: number) => {
-    const k = kinds[l];
-    if (k === 'lobby' || k === 'office') return 0.95;
-    if (k === 'floor') return 0.8;
-    if (k === 'hidden') return 0.3;
-    const n = noise(l, wing);
-    return n < 0.25 ? 0.08 : 0.18 + n * 0.32;
-  };
+  const baseLight = (l: number, wing: number) => baseLightOf(kinds[l], l, wing);
 
   const mats = useMemo(createMaterials, []);
   useEffect(
@@ -218,19 +202,8 @@ export function Tower({ stops, labels, top, officeSign, signs }: Props) {
     return { slabs, metal, glass };
   }, [roof, totalH, kinds]);
 
-  /**
-   * Which back wall a floor-wing has. Full: a lit wall across the wing (the left wing of every service
-   * floor keeps one, a dark ground behind its name). Core: only the building core behind the lift.
-   * None: the floor is open to the city behind the tower, as real towers are at night.
-   */
-  const backWall = (l: number, wing: number): 'full' | 'core' | 'none' => {
-    const k = kinds[l];
-    if (k === 'lobby') return 'full';
-    if (k === 'office') return 'none';
-    if (k === 'floor') return wing === 0 ? 'full' : 'core';
-    const n = noise(l + 13, wing);
-    return n < 0.35 ? 'full' : n < 0.75 ? 'core' : 'none';
-  };
+  /** Which back wall a floor-wing has (see backWallOf). */
+  const backWall = (l: number, wing: number) => backWallOf(kinds[l], l, wing);
 
   /** Colour of the ceiling LEDs: neutral on the service floors, warmer or cooler floor by floor above. */
   const ledTint = (l: number, wing: number) => {
@@ -358,7 +331,8 @@ export function Tower({ stops, labels, top, officeSign, signs }: Props) {
     const panels: Item[] = [];
     for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) panels.push({ p: [sx * WING_X, y1 - 0.02, -3 + i * 2.6], s: [WING_W - 1.2, 0.02, 0.5] });
     panels.push({ p: [0, y1 - 0.02, -2], s: [SHAFT_W - 0.6, 0.02, 4] });
-    return { neon, halo, wide, panels, y0 };
+    const wood: Item[] = [{ p: [0, y0 + 0.005, -0.6], s: [TOWER_W - 0.2, 0.01, TOWER_D - 2.6] }];
+    return { neon, halo, wide, panels, wood, y0 };
   }, [top]);
 
   /* ---------- The lift lights up the floor it is at ---------- */
@@ -427,7 +401,9 @@ export function Tower({ stops, labels, top, officeSign, signs }: Props) {
       <Instanced items={office.wide} geometry={PLANE} material={mats.haloWide} renderOrder={3} />
       <Instanced items={office.halo} geometry={PLANE} material={mats.halo} renderOrder={3} />
       <Instanced items={office.panels} material={mats.panel} />
-      <OfficeInterior y={office.y0} mats={mats} />
+      <Instanced items={office.wood} material={mats.floorWood} />
+      {/* People and furniture on every floor, and the desk of Office 902 */}
+      <Offices kinds={kinds} top={top} deskImage={deskImage} />
 
       {/* Lobby canopy light */}
       <mesh position={[0, FLOOR_H - 0.27, FRONT_Z + 1.4]} scale={[SHAFT_W + 6, 0.02, 2.4]} geometry={BOX} material={mats.panel} />
@@ -436,47 +412,3 @@ export function Tower({ stops, labels, top, officeSign, signs }: Props) {
     </group>
   );
 }
-
-/** Office 902: the room the doors open onto on the top stop. */
-function OfficeInterior({ y, mats: m }: { y: number; mats: TowerMaterials }) {
-  const items = useMemo(() => {
-    const wood: Item[] = [{ p: [0, y + 0.005, -0.6], s: [TOWER_W - 0.2, 0.01, TOWER_D - 2.6] }];
-    const dark: Item[] = [
-      // Desk facing the window, with a low credenza and a sofa
-      { p: [3.8, y + 0.76, -2.6], s: [2.6, 0.06, 1.1] },
-      { p: [2.65, y + 0.38, -2.6], s: [0.08, 0.76, 1.0] },
-      { p: [4.95, y + 0.38, -2.6], s: [0.08, 0.76, 1.0] },
-      { p: [3.8, y + 0.55, -1.75], s: [0.62, 1.1, 0.12] },
-      { p: [3.8, y + 0.26, -1.95], s: [0.62, 0.08, 0.62] },
-      { p: [-4.6, y + 0.24, -3.2], s: [3.2, 0.48, 1.0] },
-      { p: [-4.6, y + 0.62, -3.62], s: [3.2, 0.5, 0.2] },
-      { p: [-4.6, y + 0.2, -1.8], s: [1.3, 0.4, 0.8] },
-      { p: [0, y + 0.3, -4.6], s: [5.5, 0.6, 0.5] },
-    ];
-    const lightWood: Item[] = [
-      { p: [-4.6, y + 0.52, -3.15], s: [3.0, 0.08, 0.9] },
-      { p: [-4.6, y + 0.42, -1.8], s: [1.2, 0.04, 0.72] },
-    ];
-    const leaves: Item[] = [
-      { p: [6.9, y + 0.9, -4.4], s: [0.9, 1.2, 0.9] },
-      { p: [-7.0, y + 0.9, -4.4], s: [0.9, 1.2, 0.9] },
-    ];
-    const pots: Item[] = [
-      { p: [6.9, y + 0.25, -4.4], s: [0.6, 0.5, 0.6] },
-      { p: [-7.0, y + 0.25, -4.4], s: [0.6, 0.5, 0.6] },
-    ];
-    return { wood, dark, lightWood, leaves, pots };
-  }, [y]);
-  return (
-    <group>
-      <Instanced items={items.wood} material={m.floorWood} />
-      <Instanced items={items.dark} material={m.furniture} />
-      <Instanced items={items.lightWood} material={m.furnitureLight} />
-      <Instanced items={items.pots} material={m.furniture} />
-      <Instanced items={items.leaves} geometry={LEAF} material={m.leaf} />
-    </group>
-  );
-}
-
-const LEAF = new THREE.IcosahedronGeometry(0.5, 1);
-
