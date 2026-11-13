@@ -10,6 +10,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { keepVersion } from './keep-version.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const out = 'easyfirst-vps.tar.gz';
@@ -31,3 +32,4 @@ const r = spawnSync('tar', ['-czf', tmp, ...parts], { cwd: root, stdio: 'inherit
 if (r.error || r.status !== 0) fail(`tar failed${r.error ? `: ${r.error.message}` : ''}`);
 fs.renameSync(path.join(root, tmp), path.join(root, out));
 console.log(`${out}: ${(fs.statSync(path.join(root, out)).size / 1048576).toFixed(1)} MB`);
+keepVersion(out);

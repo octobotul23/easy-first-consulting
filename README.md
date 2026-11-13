@@ -180,6 +180,12 @@ Each setting is given as an argument or as an environment variable.
 2. Start the server: `PUBLIC_ORIGIN=https://easyfirst-ae.com TRUST_PROXY=1 npm run serve`. Run it behind nginx or Caddy with HTTPS. Keep `HOST=127.0.0.1` so only the proxy reaches it.
 3. **Back up the `data/` folder.** It holds everything changed from the panel.
 
+### Versions
+
+Every build raises the version by one (v0.0.1, v0.0.2, …). The number lives only in `package.json`. The panel shows it small under **Settings**, for example "Site version v0.0.3 · built on 13.11.2026". Visitors never see it.
+
+`npm run vps` and `npm run demo` also keep a copy of each package in `versions/v<version>/`. Each build adds a line to `versions/versions.txt` with the version, date, file and size. Nothing there is deleted automatically, so any earlier build can be uploaded again. The folder stays out of git.
+
 ### On a VPS (Ubuntu, beside other sites such as ILUZ)
 
 1. **DNS:** an `A` record for the domain (and one for `www`) pointing to the VPS's IP.

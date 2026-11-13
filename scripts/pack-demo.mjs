@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
+import { keepVersion } from './keep-version.mjs';
 
 const arg = (name, fallback) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -117,3 +118,4 @@ const tmp = `${out}.tmp`;
 fs.writeFileSync(tmp, Buffer.concat([...locals, cd, end]));
 fs.renameSync(tmp, out);
 console.log(`${path.relative(root, out)}: ${files.length} files, ${(fs.statSync(out).size / 1048576).toFixed(1)} MB`);
+keepVersion(out);

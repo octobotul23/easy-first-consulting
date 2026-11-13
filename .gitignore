@@ -3,6 +3,7 @@ dist
 dist-demo
 easy-first-consulting-demo.zip
 easyfirst-vps.tar.gz
+versions
 data
 *.local
 .env
