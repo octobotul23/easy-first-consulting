@@ -206,6 +206,7 @@ details.group > .group-body { padding: 0 16px; }
 .section-head h2 { font: 500 40px/1.05 var(--font-serif); }
 .section-head p { margin: 8px 0 0; color: var(--soft); max-width: 60ch; }
 .card { padding: 22px 22px 4px; margin-bottom: 18px; border-radius: 18px; border: 1px solid var(--line); background: var(--panel); }
+.adm-version { margin: 4px 2px 0; text-align: right; font-size: 11px; letter-spacing: .04em; color: var(--muted, rgba(247, 238, 233, .45)); }
 .card > .group:only-child { border: 0; padding: 0; background: none; margin: 0 0 8px; }
 
 .adm-side {

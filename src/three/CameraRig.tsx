@@ -11,7 +11,7 @@ const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 
 /**
  * What the phone shot keeps on screen side by side (x, scene units): the cabin and the floor's name.
- * Floors 1–8 have their name on the left wing, so the camera stands to the left; the top floor (Office 906)
+ * Floors 1–8 have their name on the left wing, so the camera stands to the left; the top floor (Office 902)
  * has its name on the right wing, so the camera swings to the right on the way up to it.
  */
 const span = (from: number, to: number) => ({ mid: (from + to) / 2, half: (to - from) / 2 });
@@ -48,7 +48,7 @@ function bezier(out: THREE.Vector3, p0: THREE.Vector3, p1: THREE.Vector3, p2: TH
  *  - first part of the ride: flying in to the glass cabin;
  *  - then riding up with it, the cabin a little right of centre so the panels on the left never cover it;
  *  - at each floor the camera moves closer while the doors are open;
- *  - on the top stop it walks through the open cabin into Office 906 and looks out of its window.
+ *  - on the top stop it walks through the open cabin into Office 902 and looks out of its window.
  * In the phone layout (upright, card at the bottom) the camera rides further back, so the cabin and the
  * floor's name on the glass fit on the screen together: from the left for floors 1–8, swinging to the right
  * for the top floor. At a floor it tilts down so both sit above the card. With the names on the glass
@@ -61,7 +61,7 @@ export function CameraRig({ signs = true }: { signs?: boolean }) {
   const invalidate = useThree((s) => s.invalidate);
   const aspect = useThree((s) => s.size.width / Math.max(1, s.size.height));
   const pointer = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
-  /** 0 = outside the lift … 1 = inside Office 906. */
+  /** 0 = outside the lift … 1 = inside Office 902. */
   const office = useRef(0);
   /** Phone shot: 0 = from the left (floor names) … 1 = from the right (the office's name). −1 = not set yet. */
   const side = useRef(-1);

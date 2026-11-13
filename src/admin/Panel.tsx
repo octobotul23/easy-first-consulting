@@ -13,7 +13,7 @@ type SectionId = 'lobby' | 'floors' | 'contact' | 'company' | 'words' | 'setting
 const SECTIONS: { id: SectionId; title: string; intro: string; roots: string[] }[] = [
   { id: 'lobby', title: 'First screen', intro: 'What visitors see first: the tower at sunset, the headline and the hint to scroll.', roots: ['lobby'] },
   { id: 'floors', title: 'Floors', intro: 'One floor per service. Change the texts, move a floor up or down, or hide it.', roots: ['floors'] },
-  { id: 'contact', title: 'Office 906', intro: 'The top floor: the contact office, its details and the form.', roots: ['contact'] },
+  { id: 'contact', title: 'Office 902', intro: 'The top floor: the contact office, its details and the form.', roots: ['contact'] },
   { id: 'company', title: 'Company', intro: 'Name, logo, phone, address, the people in the contact office and where form messages go.', roots: ['company'] },
   { id: 'words', title: 'Menu & small words', intro: 'The menu at the top and short words used in several places.', roots: ['nav', 'common'] },
   { id: 'settings', title: 'Settings', intro: 'The 3D tower and the Dubai video behind it, tools for many texts at once, earlier versions and your password.', roots: ['settings'] },
@@ -317,6 +317,9 @@ export function Panel({ user, onSignOut }: { user: string; onSignOut: () => void
               <Versions currentVersion={base.version} dirty={dirty} onRestored={(r) => (adopt(r), setNotice({ kind: 'ok', text: `${r.note}. The site shows it now.` }))} />
               {__DEMO__ ? <DemoPasswordNote /> : <PasswordForm user={user} />}
               <Activity key={base.version} />
+              <p className="adm-version">
+                Site version v{__APP_VERSION__} · built on {__BUILD_DATE__}
+              </p>
             </>
           )}
         </main>
@@ -385,7 +388,7 @@ function FloorsSection({ draft, set, floorIdx, setFloorIdx, badKeys, openSection
   return (
     <div className="floors">
       <div className="floor-list" role="group" aria-label="Floors, top to bottom">
-        <button type="button" className="floor-fixed" onClick={() => openSection('contact')} title="The contact floor is changed in the Office 906 section">
+        <button type="button" className="floor-fixed" onClick={() => openSection('contact')} title="The contact floor is changed in the Office 902 section">
           <span className="no">{top}</span>
           <span className="name">{draft.contact.label}</span>
           <span className="go">Edit ›</span>

@@ -16,7 +16,7 @@ export const company: CompanyInfo = {
   logo: '/logo.png',
   phone: '+971 50 222 0708',
   website: 'https://easyfirst-ae.com/',
-  address: ['Office 906, 9th Floor', 'IRIS Bay Tower, Business Bay', 'Dubai, United Arab Emirates'],
+  address: ['Office 902, 9th Floor', 'IRIS Bay Tower, Business Bay', 'Dubai, United Arab Emirates'],
   mapUrl: 'https://www.google.com/maps/search/?api=1&query=IRIS+Bay+Tower+Business+Bay+Dubai',
   formEmail: 'ceo@efcmuae.com',
   formEndpoint: CONTACT_ENDPOINT,
@@ -28,7 +28,6 @@ export const company: CompanyInfo = {
       email: 'ceo@efcmuae.com',
       bio: 'More than a decade of experience in commodities, particularly oil and gas, with a deep understanding of the complexities of the commodities market.',
     },
-    { id: 'chairman', role: 'Chairman', name: 'Sultan Bin Nayef', email: 'chairman@efcmuae.com', bio: '' },
   ],
 };
 

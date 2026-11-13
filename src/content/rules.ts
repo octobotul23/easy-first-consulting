@@ -54,7 +54,7 @@ const RULES: Record<string, Rule> = {
   'floors.*.blocks.*.heading': { max: 80, required: true },
   'floors.*.blocks.*.text': { kind: 'multiline', max: 900 },
   'floors.*.note': { kind: 'multiline', max: 600 },
-  // Contact (Office 906)
+  // Contact (Office 902)
   'contact.label': { max: 40, required: true },
   'contact.kicker': { max: 90 },
   'contact.title': { max: 160, required: true },

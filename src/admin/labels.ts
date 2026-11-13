@@ -66,7 +66,7 @@ const INFO: Record<string, FieldInfo> = {
   'floors.*.blocks.*.text': { label: 'Text' },
   'floors.*.note': { label: 'Small print at the bottom of the floor' },
 
-  // ---------- Office 906 ----------
+  // ---------- Office 902 ----------
   'contact.label': { label: 'Floor name', help: 'On the top lift button, the floor display and the sign on the tower.' },
   'contact.kicker': { label: 'Small line above the title' },
   'contact.title': { label: 'Title of the office' },
@@ -113,10 +113,10 @@ const INFO: Record<string, FieldInfo> = {
   },
   'company.people': { label: 'People in the contact office', item: 'Person', add: 'Add a person' },
   'company.people.*.id': { hidden: true },
-  'company.people.*.role': { label: 'Role', help: 'E.g. CEO, Chairman.' },
+  'company.people.*.role': { label: 'Role', help: 'E.g. CEO.' },
   'company.people.*.name': { label: 'Name' },
   'company.people.*.email': { label: 'E-mail' },
-  'company.people.*.bio': { label: 'A few lines about this person', help: 'Shown under their e-mail in Office 906. Leave empty to show nothing.' },
+  'company.people.*.bio': { label: 'A few lines about this person', help: 'Shown under their e-mail in Office 902. Leave empty to show nothing.' },
 
   // ---------- Menu and small words ----------
   nav: { label: 'Menu at the top' },
@@ -243,7 +243,7 @@ export function labelFor(path: Path): string {
 export function placeOf(path: Path, floorLabel: (i: number) => string): string {
   const head: Record<string, string> = {
     lobby: 'First screen',
-    contact: 'Office 906',
+    contact: 'Office 902',
     company: 'Company',
     nav: 'Menu',
     common: 'Small words',

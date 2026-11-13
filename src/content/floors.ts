@@ -12,14 +12,14 @@ export const lobby: LobbyContent = {
   eyebrow: 'Easy First Management Consultancies · Dubai',
   title: 'Redefining Growth. Powering Opportunities.',
   subtitle:
-    'Consultancy and trading across energy, gold, corporate structuring, escrow and digital assets — from Office 906, IRIS Bay Tower, Business Bay.',
+    'Consultancy and trading across energy, gold, corporate structuring, escrow and digital assets — from Office 902, IRIS Bay Tower, Business Bay.',
   scrollHint: 'Scroll to go up',
   scrollUpHint: 'Scroll up to go up',
   swipeDownHint: 'Swipe down to go up',
   seo: {
     title: 'Easy First Management Consultancies FZCO | Dubai',
     description:
-      'Dubai consultancy and trading firm: oil and gas, gold, company formation, investment structuring, escrow and digital assets. Office 906, IRIS Bay Tower, Business Bay.',
+      'Dubai consultancy and trading firm: oil and gas, gold, company formation, investment structuring, escrow and digital assets. Office 902, IRIS Bay Tower, Business Bay.',
   },
 };
 
@@ -229,9 +229,9 @@ export const floors: FloorContent[] = [
 ];
 
 export const contact: ContactContent = {
-  label: 'Office 906',
+  label: 'Office 902',
   kicker: 'Contact',
-  title: 'Welcome to Office 906.',
+  title: 'Welcome to Office 902.',
   intro: 'Tell us what you are working on. A member of our team will get back to you by e-mail or phone.',
   addressLabel: 'Address',
   phoneLabel: 'Phone',
@@ -260,9 +260,9 @@ export const contact: ContactContent = {
     errorSummary: 'Please check the highlighted fields.',
   },
   seo: {
-    title: 'Contact — Office 906, IRIS Bay Tower, Business Bay | Easy First',
+    title: 'Contact — Office 902, IRIS Bay Tower, Business Bay | Easy First',
     description:
-      'Visit or contact Easy First Management Consultancies FZCO: Office 906, 9th Floor, IRIS Bay Tower, Business Bay, Dubai. Phone +971 50 222 0708.',
+      'Visit or contact Easy First Management Consultancies FZCO: Office 902, 9th Floor, IRIS Bay Tower, Business Bay, Dubai. Phone +971 50 222 0708.',
   },
 };
 

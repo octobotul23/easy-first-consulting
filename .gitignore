@@ -2,6 +2,7 @@ node_modules
 dist
 dist-demo
 easy-first-consulting-demo.zip
+easyfirst-vps.tar.gz
 data
 *.local
 .env

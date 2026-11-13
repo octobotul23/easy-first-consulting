@@ -7,7 +7,7 @@
  * Inside a stop window the lift waits at that floor; between windows it travels.
  *
  * "Rise" (3D, panel: Settings → Scroll up to ride the lift up): the sections are laid out
- * bottom to top (lobby at the bottom of the page, Office 906 at the top) and the page starts
+ * bottom to top (lobby at the bottom of the page, Office 902 at the top) and the page starts
  * at the bottom, so scrolling up takes the lift up. The engine then works in a mirrored
  * coordinate, the distance scrolled up from the lobby, so everything below stays the same.
  *
@@ -92,7 +92,7 @@ let lastLevel = 0;
 let stillFor = 0;
 let prev = { pos: -1, level: -1, door: -1, wanted: false };
 let tween: gsap.core.Tween | null = null;
-/** Set by the 3D camera while it is inside Office 906: the doors stay open until it is back out. */
+/** Set by the 3D camera while it is inside Office 902: the doors stay open until it is back out. */
 let hold = 0;
 /** Set while a lift button animates the scroll: the cabin goes straight to the target floor. */
 let express: { from: number; to: number; levelFrom: number; y0: number; y1: number; done: boolean } | null = null;
@@ -350,7 +350,7 @@ export function configureLift(
   discrete.forEach((f) => f());
 }
 
-/** Keeps the doors open (0 = no hold). Used by the camera while it walks into Office 906. */
+/** Keeps the doors open (0 = no hold). Used by the camera while it walks into Office 902. */
 export function holdDoors(v: number) {
   hold = v;
 }
@@ -429,7 +429,7 @@ export function rising(): boolean {
 }
 
 /**
- * Rise mode keys: Space goes on up the tower (Shift+Space back down), Home = lobby, End = Office 906.
+ * Rise mode keys: Space goes on up the tower (Shift+Space back down), Home = lobby, End = Office 902.
  * The arrow and Page keys already match: up = up.
  */
 function onRiseKey(e: KeyboardEvent) {

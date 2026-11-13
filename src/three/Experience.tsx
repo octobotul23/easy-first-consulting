@@ -18,8 +18,15 @@ import { Tower } from './Tower';
  * the neon orange) and rolls the over-bright lights off to a warm white instead of clipping.
  * The canvas is transparent and premultiplied, so the video shows through wherever nothing is drawn.
  */
+const SCREEN_DPR = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
+/** Sharpest drawing size (pixels per CSS pixel). Above 1.5 the eye sees no difference, the graphics card does. */
+const MAX_DPR = Math.min(SCREEN_DPR, 1.5);
+/** Smallest drawing size the scene may drop to on slow graphics, to keep 60 frames a second. */
+const MIN_DPR = Math.min(MAX_DPR, 0.7);
+
 const GL = {
-  antialias: true,
+  // Smoothed edges cost every pixel four samples; on sharp screens (1.5× and more) the edges are already fine.
+  antialias: SCREEN_DPR < 1.5,
   powerPreference: 'high-performance',
   alpha: true,
   premultipliedAlpha: true,
@@ -69,6 +76,52 @@ function SlowGuard({ onSlow }: { onSlow: () => void }) {
     s.done = true;
     const sorted = [...s.gaps].sort((a, b) => a - b);
     if (sorted[sorted.length >> 1] > 50) onSlow();
+  });
+  return null;
+}
+
+/**
+ * Keeps the ride at the screen's full frame rate (60 frames a second, more on faster screens). It times the
+ * frames while the camera moves, as SlowGuard does, in groups of 24. When the typical frame of two groups in a
+ * row takes longer than 18 ms (under about 55 a second), the graphics card is the limit: the scene is drawn
+ * with 20 % fewer pixels per side, down to MIN_DPR. After 8 smooth groups it tries one step sharper again, but
+ * never back to a size that was already too slow.
+ */
+function AdaptiveResolution() {
+  const camera = useThree((s) => s.camera);
+  const setDpr = useThree((s) => s.setDpr);
+  const m = useRef({ last: 0, key: '', moving: false, gaps: [] as number[], dpr: MAX_DPR, ceiling: MAX_DPR, slow: 0, good: 0 });
+  useFrame(() => {
+    const s = m.current;
+    const now = performance.now();
+    const gap = now - s.last;
+    s.last = now;
+    const { x, y, z } = camera.position;
+    const key = `${x.toFixed(3)} ${y.toFixed(3)} ${z.toFixed(3)}`;
+    const wasMoving = s.moving;
+    s.moving = key !== s.key;
+    s.key = key;
+    if (!wasMoving || document.hidden || gap <= 0 || gap > 250) return;
+    s.gaps.push(gap);
+    if (s.gaps.length < 24) return;
+    const median = [...s.gaps].sort((a, b) => a - b)[12];
+    s.gaps.length = 0;
+    if (median > 18) {
+      s.good = 0;
+      if (++s.slow < 2 || s.dpr <= MIN_DPR) return;
+      s.slow = 0;
+      s.ceiling = s.dpr;
+      s.dpr = Math.max(MIN_DPR, Math.round(s.dpr * 80) / 100);
+      setDpr(s.dpr);
+    } else {
+      s.slow = 0;
+      if (++s.good < 8) return;
+      s.good = 0;
+      const next = Math.min(MAX_DPR, Math.round(s.dpr * 110) / 100);
+      if (next >= s.ceiling - 0.001) return;
+      s.dpr = next;
+      setDpr(next);
+    }
   });
   return null;
 }
@@ -213,7 +266,7 @@ export default function Experience({ content, onReady, onFail, onSlow }: Props) 
         />
       )}
       <Canvas
-        dpr={[1, 1.6]}
+        dpr={MAX_DPR}
         frameloop="demand"
         // Transparent, so the video shows behind the tower; with the drawn sky the background colour fills it.
         gl={GL}
@@ -261,6 +314,7 @@ export default function Experience({ content, onReady, onFail, onSlow }: Props) 
                   }}
                 />
               )}
+              {shown && <AdaptiveResolution />}
               {onSlow && shown && <SlowGuard onSlow={onSlow} />}
             </>
           )}

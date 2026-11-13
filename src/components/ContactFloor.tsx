@@ -14,7 +14,7 @@ interface Props {
 const delay = (i: number) => ({ '--i': i }) as CSSProperties;
 const tel = (phone: string) => phone.replace(/[^\d+]/g, '');
 
-/** Floor 9 — Office 906: company details and the contact form. */
+/** Floor 9 — Office 902: company details and the contact form. */
 export function ContactFloor({ content, index, level, mode }: Props) {
   const ref = useRef<HTMLElement>(null);
   const open3d = useLift((s) => s.openStop === index);

@@ -6,7 +6,7 @@ import { goTo, lift, onLiftFrame, useLift } from '../state/elevator';
 
 interface Props {
   stops: Stop[];
-  /** Level of the top stop (Office 906): the height of the shaft. */
+  /** Level of the top stop (Office 902): the height of the shaft. */
   top: number;
   common: CommonContent;
   settings: SceneSettings;

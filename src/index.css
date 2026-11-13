@@ -122,10 +122,10 @@ h1, h2, h3 { margin: 0; }
 .stop-3d { position: relative; }
 .stop-sticky { position: sticky; top: 0; height: 100vh; }
 /* 3D, "Scroll up to ride the lift up" (panel: Settings): the stops are laid out bottom to top, so the lobby
-   is at the bottom of the page and Office 906 at the top. The HTML keeps its order (search engines, screen readers). */
+   is at the bottom of the page and Office 902 at the top. The HTML keeps its order (search engines, screen readers). */
 .building.rise { display: flex; flex-direction: column-reverse; }
 .building.rise > * { flex: none; }
-/* No pull-to-refresh at the top (Office 906), where visitors are still dragging down. */
+/* No pull-to-refresh at the top (Office 902), where visitors are still dragging down. */
 html[data-rise], html[data-rise] body { overscroll-behavior-y: none; }
 .building:focus { outline: none; }
 
@@ -561,6 +561,13 @@ textarea.input { resize: vertical; min-height: 96px; }
   .panel-title { padding-right: 52px; }
   .panel-plaque { font-size: 52px; right: 18px; }
 }
+
+/* ---------- 3D: no blur behind the panels ----------
+   The tower behind them is drawn again on every frame of the ride, and the browser would work out each blur
+   again every time (a big share of a frame on laptop graphics). The panels are nearly opaque, so a little more
+   colour keeps their look without it. */
+[data-mode="3d"] .panel-card, [data-mode="3d"] .lift-panel, [data-mode="3d"] .fd-face { -webkit-backdrop-filter: none; backdrop-filter: none; }
+[data-mode="3d"] .panel-card { background: linear-gradient(165deg, rgba(44, 17, 34, .8), rgba(18, 9, 15, .88)); }
 
 /* ---------- Reduced motion: no movement, content just appears ---------- */
 @media (prefers-reduced-motion: reduce) {

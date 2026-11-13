@@ -23,7 +23,7 @@ export const CABIN_Z = FRONT_Z - SHAFT_D + 0.16 + CABIN_D / 2;
 export const LANDING_Z = FRONT_Z - SHAFT_D;
 
 /**
- * Floor names on the glass: each floor's name sits on the left wing; the office's name ("Contact – Office 906")
+ * Floor names on the glass: each floor's name sits on the left wing; the office's name ("Contact – Office 902")
  * on the right wing of the top floor. The phone camera frames the cabin together with these (CameraRig).
  */
 export const SIGN_Z = FRONT_Z + 0.15;

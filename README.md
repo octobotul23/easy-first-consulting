@@ -1,6 +1,6 @@
 # Easy First — The Lift in IRIS Bay Tower
 
-Presentation site for **Easy First Management Consultancies FZCO** (Office 906, IRIS Bay Tower, Business Bay, Dubai).
+Presentation site for **Easy First Management Consultancies FZCO** (Office 902, IRIS Bay Tower, Business Bay, Dubai).
 Visitors ride a glass lift up a 3D tower as they scroll. Each floor is a service, and on floor 9 the doors open onto the contact office.
 
 Vite + React + TypeScript, three.js (@react-three/fiber, drei), GSAP ScrollTrigger and Tailwind.
@@ -29,16 +29,16 @@ Visitors get the full 3D lift on computers, tablets and phones with WebGL. The l
 
 `?mode=3d` or `?mode=flow` in the address forces one version, which is handy for testing.
 
-**Which way to scroll.** The 3D tower opens at the Lobby, at the bottom of the page. Scrolling up (mouse wheel up, or dragging the page down with a finger) takes the lift up, and Office 906 is at the top of the page.
+**Which way to scroll.** The 3D tower opens at the Lobby, at the bottom of the page. Scrolling up (mouse wheel up, or dragging the page down with a finger) takes the lift up, and Office 902 is at the top of the page.
 - The hint under the title says so: “Scroll up to go up” on computers, “Swipe down to go up” on phones and tablets, with a small light running the same way.
-- Keys: ↑ and Page Up go up, ↓ and Page Down go down. Space goes up one screen (Shift+Space goes down), Home goes to the Lobby, End to Office 906.
-- Pull-to-refresh is off on the 3D tower, so dragging down at Office 906 does not reload the page.
+- Keys: ↑ and Page Up go up, ↓ and Page Down go down. Space goes up one screen (Shift+Space goes down), Home goes to the Lobby, End to Office 902.
+- Pull-to-refresh is off on the 3D tower, so dragging down at Office 902 does not reload the page.
 - With **Settings → Scroll up to ride the lift up** off, the 3D tower becomes a normal page again: it opens at the Lobby at the top, and scrolling down takes the lift up.
 - The 2D version always reads from top to bottom.
 - In both versions a link to a floor (e.g. `/#contact`) opens at that floor. Resizing the window or turning the phone keeps the lift on its floor.
 
 **On phones held upright** the tower fills the screen. When the lift stops, the floor's text slides up in a card at the bottom, above one row of lift buttons (G–9). Held sideways, phones use the computer layout, with the card on the left and the buttons on the right.
-While riding, the camera keeps the cabin and the floor's name on the glass on the screen together. For floors 1–8 it stands a little to the left, where the names are. On the way up to Office 906 it swings to the right, to the office's name, rests there for a moment once the doors are open (about 1.6 s), then walks in. When the doors open, it tilts so both sit above the card. With **Settings → Floor names on the glass of the tower** off, the cabin stays in the middle.
+While riding, the camera keeps the cabin and the floor's name on the glass on the screen together. For floors 1–8 it stands a little to the left, where the names are. On the way up to Office 902 it swings to the right, to the office's name, rests there for a moment once the doors are open (about 1.6 s), then walks in. When the doors open, it tilts so both sit above the card. With **Settings → Floor names on the glass of the tower** off, the cabin stays in the middle.
 
 Both versions use the same HTML texts, the same lift buttons 1–9 and the same keyboard support. Scrolling is never blocked.
 
@@ -65,8 +65,8 @@ Both versions use the same HTML texts, the same lift buttons 1–9 and the same 
 |---|---|
 | **First screen** | Small line above the headline, the headline (the second sentence uses the orange–pink gradient), the text under it, the hint at the bottom (three versions: computers and phones while scrolling up rides up, and one for scrolling down), and the search title and description. |
 | **Floors** | One floor per service. Name (lift buttons, floor display, tower sign, form list), small line, title, text, groups of tags, numbered steps, bullet points, text blocks, small print, and search texts. You can move a floor up or down, or hide it (the lift skips it). |
-| **Office 906** | The contact floor: title and intro; the labels for address, phone and website; the form's labels, buttons and messages after sending; search texts. |
-| **Company** | Name (also in Arabic, for search engines) and logo, phone, address and map link, website, the people (CEO, Chairman) with their e-mails and a few lines about each (shown in Office 906; empty = nothing shown), the e-mail that receives the form, and the form service address. |
+| **Office 902** | The contact floor: title and intro; the labels for address, phone and website; the form's labels, buttons and messages after sending; search texts. |
+| **Company** | Name (also in Arabic, for search engines) and logo, phone, address and map link, website, the people (now the CEO; more can be added) with their e-mails and a few lines about each (shown in Office 902; empty = nothing shown), the e-mail that receives the form, and the form service address. |
 | **Menu & small words** | Menu items at the top, the footer © line, and short words used in several places ("Floor", "Lobby", "Going up", the lift panel's name…). |
 | **Settings** | 3D tower on/off, 3D on phones on/off, which way to scroll (up or down) to ride up, floor names on the glass, how long the lift waits at each floor. Background: the Dubai video behind the tower on/off, the video for computers, the lighter copy for phones, its still picture, how much it is darkened, the city reflected in the glass on/off, and the brightness of the tower. The ground: the street, palms and park around the tower on/off, and how bright its street lights are. With the video off: the skyline photo and its blur. Also these tools: **find and replace** across all texts, **earlier versions**, **password**, **recent activity**. |
 

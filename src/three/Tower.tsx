@@ -290,7 +290,7 @@ export function Tower({ stops, labels, top, officeSign, signs }: Props) {
       }
     }
 
-    // Office 906: warm pools on the wooden floor under its ceiling panels
+    // Office 902: warm pools on the wooden floor under its ceiling panels
     const oy = top * FLOOR_H + 0.012;
     const ob = baseLight(top, 0);
     for (const sx of [-1, 1]) add(pools, { p: [sx * WING_X, oy, -0.4], s: [WING_W - 0.8, 7.5, 1], r: down }, top, ob, floorPool);
@@ -329,7 +329,7 @@ export function Tower({ stops, labels, top, officeSign, signs }: Props) {
   useEffect(() => () => signItems.forEach((s) => s.tex.dispose()), [signItems]);
   const signMats = useRef<(THREE.MeshBasicMaterial | null)[]>([]);
 
-  /* ---------- Office 906: neon outline ---------- */
+  /* ---------- Office 902: neon outline ---------- */
   const office = useMemo(() => {
     const y0 = top * FLOOR_H;
     const y1 = y0 + INNER_H;
@@ -422,7 +422,7 @@ export function Tower({ stops, labels, top, officeSign, signs }: Props) {
         </mesh>
       ))}
 
-      {/* Office 906 */}
+      {/* Office 902 */}
       <Instanced items={office.neon} material={mats.neon} />
       <Instanced items={office.wide} geometry={PLANE} material={mats.haloWide} renderOrder={3} />
       <Instanced items={office.halo} geometry={PLANE} material={mats.halo} renderOrder={3} />
@@ -437,7 +437,7 @@ export function Tower({ stops, labels, top, officeSign, signs }: Props) {
   );
 }
 
-/** Office 906: the room the doors open onto on the top stop. */
+/** Office 902: the room the doors open onto on the top stop. */
 function OfficeInterior({ y, mats: m }: { y: number; mats: TowerMaterials }) {
   const items = useMemo(() => {
     const wood: Item[] = [{ p: [0, y + 0.005, -0.6], s: [TOWER_W - 0.2, 0.01, TOWER_D - 2.6] }];

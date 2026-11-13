@@ -1,11 +1,16 @@
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defaultContent } from './src/content/index.ts';
 import { renderSeoHead, renderStaticBody } from './src/content/static-html.ts';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
+
+/** The site's version (package.json, raised by scripts/bump-version.mjs on every build) and the build's day. */
+const VERSION = (JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }).version;
+const BUILT = new Date().toLocaleDateString('en-GB').replaceAll('/', '.');
 
 /**
  * Puts real, crawlable HTML into index.html at build time (meta tags, Open Graph,
@@ -64,7 +69,11 @@ export default defineConfig(({ isSsrBuild, mode }) => ({
   // so the demo also works from a sub-folder (e.g. on ILUZ). Built into dist-demo/.
   base: mode === 'demo' ? './' : '/',
   // A literal true/false in every file that asks (see src/globals.d.ts): demo code drops out of the normal build.
-  define: { __DEMO__: JSON.stringify(mode === 'demo' && !isSsrBuild) },
+  define: {
+    __DEMO__: JSON.stringify(mode === 'demo' && !isSsrBuild),
+    __APP_VERSION__: JSON.stringify(VERSION),
+    __BUILD_DATE__: JSON.stringify(BUILT),
+  },
   plugins: isSsrBuild ? [] : [react(), tailwindcss(), seoStatic(), adminRoute(), demoContentOnlyInDemo(mode)],
   build: isSsrBuild
     ? {
