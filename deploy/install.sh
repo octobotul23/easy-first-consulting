@@ -58,9 +58,9 @@ sed "s#__ORIGIN__#https://$DOMAIN#" "$APP/deploy/easyfirst.service" > /etc/syste
 systemctl daemon-reload
 systemctl enable easyfirst >/dev/null 2>&1
 systemctl restart easyfirst
-ok=0
+ok=0 # the service needs a moment after the restart: try for up to 10 s, quietly
 for _ in 1 2 3 4 5 6 7 8 9 10; do
-  if curl -fsS -o /dev/null "http://127.0.0.1:$PORT/"; then ok=1; break; fi
+  if curl -fs -o /dev/null "http://127.0.0.1:$PORT/"; then ok=1; break; fi
   sleep 1
 done
 [ $ok = 1 ] || { echo "!! The site did not start. Its messages:"; journalctl -u easyfirst -n 30 --no-pager; exit 1; }
