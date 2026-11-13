@@ -1,12 +1,15 @@
 {
   "name": "easy-first-tower",
   "private": true,
-  "version": "0.0.7",
+  "version": "0.0.8",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/bump-version.mjs && tsc -p tsconfig.json && vite build && vite build --ssr src/server/entry.ts",
-    "build:demo": "node scripts/bump-version.mjs && tsc -p tsconfig.json && vite build --mode demo",
+    "build": "node scripts/bump-version.mjs && npm run build:site",
+    "build:site": "tsc -p tsconfig.json && vite build && vite build --ssr src/server/entry.ts",
+    "build:demo": "node scripts/bump-version.mjs && npm run build:demo-site",
+    "build:demo-site": "tsc -p tsconfig.json && vite build --mode demo",
+    "release": "node scripts/bump-version.mjs && npm run build:site && node scripts/pack-vps.mjs && npm run build:demo-site && node scripts/pack-demo.mjs",
     "demo": "npm run build:demo && node scripts/pack-demo.mjs",
     "vps": "npm run build && node scripts/pack-vps.mjs",
     "preview": "vite preview",

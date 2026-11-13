@@ -184,12 +184,12 @@ Each setting is given as an argument or as an environment variable.
 
 Every build raises the version by one (v0.0.1, v0.0.2, …). The number lives only in `package.json`. The panel shows it small under **Settings**, for example "Site version v0.0.3 · built on 13.11.2026". Visitors never see it.
 
-`npm run vps` and `npm run demo` also keep a copy of each package in `versions/v<version>/`. Each build adds a line to `versions/versions.txt` with the version, date, file and size. Nothing there is deleted automatically, so any earlier build can be uploaded again. The folder stays out of git.
+`npm run release` builds both packages under one new version: `easyfirst-vps.tar.gz` (for the VPS) and the demo zip, side by side in `versions/v<version>/`. `npm run vps` or `npm run demo` alone builds just that one, under a version of its own. Each build adds a line to `versions/versions.txt` with the version, date, file and size. Nothing there is deleted automatically, so any earlier build can be uploaded again. The folder stays out of git.
 
 ### On a VPS (Ubuntu, beside other sites such as ILUZ)
 
 1. **DNS:** an `A` record for the domain (and one for `www`) pointing to the VPS's IP.
-2. **Pack:** `npm run vps` builds the site and writes `easyfirst-vps.tar.gz` (site, server, `deploy/`; never `data/`).
+2. **Pack:** `npm run release` (or `npm run vps` for the VPS package alone) builds the site and writes `easyfirst-vps.tar.gz` (site, server, `deploy/`; never `data/`).
 3. **Upload** it to your home folder on the VPS (WinSCP, or `scp easyfirst-vps.tar.gz root@<IP>:~/`).
 4. **Install** (first time and every update, same commands):
 
