@@ -189,7 +189,7 @@ Every build raises the version by one (v0.0.1, v0.0.2, …). The number lives on
 ### On a VPS (Ubuntu, beside other sites such as ILUZ)
 
 1. **DNS:** an `A` record for the domain (and one for `www`) pointing to the VPS's IP.
-2. **Pack:** `npm run release` (or `npm run vps` for the VPS package alone) builds the site and writes `easyfirst-vps.tar.gz` (site, server, `deploy/`; never `data/`).
+2. **Pack, on your own computer** (in the project folder, not on the VPS): `npm run release` (or `npm run vps` for the VPS package alone) builds the site and writes `easyfirst-vps.tar.gz` (site, server, `deploy/`; never `data/`).
 3. **Upload** it to your home folder on the VPS (WinSCP, or `scp easyfirst-vps.tar.gz root@<IP>:~/`).
 4. **Install** (first time and every update, same commands):
 
