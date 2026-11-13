@@ -21,6 +21,11 @@ import { Tower } from './Tower';
 const SCREEN_DPR = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
 /** Sharpest drawing size (pixels per CSS pixel). Above 1.5 the eye sees no difference, the graphics card does. */
 const MAX_DPR = Math.min(SCREEN_DPR, 1.5);
+/**
+ * Drawing size once the camera has stopped: nothing is drawn while everything is still, so the last
+ * picture can be sharper (up to the screen's own pixels, 2× at most) at the cost of one frame.
+ */
+const REST_DPR = Math.min(SCREEN_DPR, 2);
 /** Smallest drawing size the scene may drop to on slow graphics, to keep 60 frames a second. */
 const MIN_DPR = Math.min(MAX_DPR, 0.7);
 
@@ -85,12 +90,15 @@ function SlowGuard({ onSlow }: { onSlow: () => void }) {
  * frames while the camera moves, as SlowGuard does, in groups of 24. When the typical frame of two groups in a
  * row takes longer than 18 ms (under about 55 a second), the graphics card is the limit: the scene is drawn
  * with 20 % fewer pixels per side, down to MIN_DPR. After 8 smooth groups it tries one step sharper again, but
- * never back to a size that was already too slow.
+ * never back to a size that was already too slow. A moment after the camera stops, the still picture is
+ * drawn once more at REST_DPR (sharp edges and text); the next move goes back to the moving size.
  */
 function AdaptiveResolution() {
   const camera = useThree((s) => s.camera);
   const setDpr = useThree((s) => s.setDpr);
-  const m = useRef({ last: 0, key: '', moving: false, gaps: [] as number[], dpr: MAX_DPR, ceiling: MAX_DPR, slow: 0, good: 0 });
+  const current = useThree((s) => s.viewport.dpr);
+  const m = useRef({ last: 0, key: '', moving: false, gaps: [] as number[], dpr: MAX_DPR, ceiling: MAX_DPR, slow: 0, good: 0, rest: 0 });
+  useEffect(() => () => window.clearTimeout(m.current.rest), []);
   useFrame(() => {
     const s = m.current;
     const now = performance.now();
@@ -101,6 +109,13 @@ function AdaptiveResolution() {
     const wasMoving = s.moving;
     s.moving = key !== s.key;
     s.key = key;
+    if (s.moving) {
+      if (Math.abs(current - s.dpr) > 0.001) setDpr(s.dpr);
+      window.clearTimeout(s.rest);
+      s.rest = window.setTimeout(() => {
+        if (REST_DPR > s.dpr + 0.001) setDpr(REST_DPR);
+      }, 180);
+    }
     if (!wasMoving || document.hidden || gap <= 0 || gap > 250) return;
     s.gaps.push(gap);
     if (s.gaps.length < 24) return;

@@ -31,7 +31,6 @@ const ABOVE_CARD = 0.18;
 const OFFICE_NAME_HOLD = 1.6;
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
-const UP = new THREE.Vector3(0, 1, 0);
 /** How far down the camera looks at the picture on the desk of Office 902 (radians). */
 const DESK_PITCH = 0.25;
 /** Share of the free part of the screen the picture may fill. */
@@ -124,9 +123,6 @@ export function CameraRig({ signs = true }: { signs?: boolean }) {
       deskPos: new THREE.Vector3(),
       deskLook: new THREE.Vector3(),
       pic: new THREE.Vector3(),
-      f: new THREE.Vector3(),
-      r: new THREE.Vector3(),
-      u: new THREE.Vector3(),
     }),
     [],
   );
@@ -227,6 +223,8 @@ export function CameraRig({ signs = true }: { signs?: boolean }) {
     v.pos.y += Math.sin(intro * Math.PI) * 4;
 
     const t = easeInOut(office.current);
+    let shiftX = 0;
+    let shiftY = 0;
     if (t > 0) {
       // Curve: from the ride position, through the open cabin, up to the desk facing the lift, ending on
       // the picture standing on it, placed in the part of the screen the contact card leaves free.
@@ -244,18 +242,14 @@ export function CameraRig({ signs = true }: { signs?: boolean }) {
       const dist = Math.min(4.2, Math.max(1.5, dw, dh));
       v.pic.set(DESK.x, oy + DESK_FRAME.y, DESK_FRAME.z);
       v.deskPos.set(DESK.x, oy + DESK_FRAME.y + Math.sin(DESK_PITCH) * dist, DESK_FRAME.z + Math.cos(DESK_PITCH) * dist);
-      // Turn the view so the picture sits at the middle of the free area, not of the screen.
+      // The camera looks straight at the picture; the lens is shifted (below) so it sits at the middle of
+      // the free area, not of the screen. Turning the camera instead would show the frame askew, and its
+      // slanted edges as steps.
       const nx = ((area.x + area.w / 2) / W) * 2 - 1;
       const ny = 1 - ((area.y + area.h / 2) / H) * 2;
-      v.f.subVectors(v.pic, v.deskPos).normalize();
-      v.r.crossVectors(v.f, UP).normalize();
-      v.u.crossVectors(v.r, v.f);
-      v.deskLook
-        .copy(v.f)
-        .addScaledVector(v.r, -nx * tanH)
-        .addScaledVector(v.u, -ny * tanV)
-        .multiplyScalar(dist)
-        .add(v.deskPos);
+      shiftX = -nx * t;
+      shiftY = ny * t;
+      v.deskLook.copy(v.pic);
       v.a.set(0, oy + 1.66, CABIN_Z + 2.4);
       bezier(v.pos, v.pos.clone(), v.a, v.deskPos, t);
       const la = v.b.set(0, oy + 1.4, -TOWER_D);
@@ -274,6 +268,15 @@ export function CameraRig({ signs = true }: { signs?: boolean }) {
       camera.fov = fov;
       camera.updateProjectionMatrix();
     }
+    // Lens shift (a fraction of half the screen): the picture moves off the middle, its edges stay level.
+    const { width: SW, height: SH } = size;
+    const ox = (shiftX * SW) / 2;
+    const oy2 = (shiftY * SH) / 2;
+    const view = camera.view;
+    if (shiftX || shiftY) {
+      if (!view?.enabled || view.fullWidth !== SW || view.fullHeight !== SH || Math.abs(view.offsetX - ox) > 0.01 || Math.abs(view.offsetY - oy2) > 0.01)
+        camera.setViewOffset(SW, SH, ox, oy2, SW, SH);
+    } else if (view?.enabled) camera.clearViewOffset();
 
     if (settling) invalidate();
   });

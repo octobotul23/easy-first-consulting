@@ -44,9 +44,20 @@ export function backWallOf(k: Kind, l: number, wing: number): 'full' | 'core' | 
 
 /* ---------- Shapes and materials ---------- */
 
-// Low-poly on purpose: a few hundred people, seen from the street.
-const BODY = new THREE.CapsuleGeometry(0.17, 0.34, 2, 7);
-const HEAD = new THREE.SphereGeometry(0.105, 8, 6);
+// People, low-poly on purpose (a few hundred, mostly seen from the street), from unit shapes scaled per
+// instance: a torso and a robe or skirt turned on a lathe (wider at the shoulders, narrower at the waist),
+// limbs as tapered cylinders (wide end first), a head, a cap of hair or headscarf, the ring of an agal.
+const lathe = (pts: [number, number][], seg: number) =>
+  new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg);
+const TORSO = lathe(
+  [[0, 0], [0.82, 0], [0.86, 0.16], [0.78, 0.42], [0.88, 0.68], [1, 0.84], [0.84, 0.96], [0.36, 1], [0, 1]],
+  8,
+);
+const ROBE = lathe([[0, 0], [1, 0], [0.93, 0.32], [0.82, 0.62], [0.86, 0.84], [0.72, 0.96], [0.3, 1], [0, 1]], 9);
+const LIMB = new THREE.CylinderGeometry(1, 0.78, 1, 6, 1);
+const HEAD = new THREE.SphereGeometry(1, 9, 6);
+const CAP = new THREE.SphereGeometry(1, 10, 4, 0, Math.PI * 2, 0, Math.PI * 0.56);
+const RING = new THREE.TorusGeometry(1, 0.24, 4, 12);
 const LEAF = new THREE.IcosahedronGeometry(0.5, 1);
 
 /**
@@ -74,9 +85,19 @@ function interiorMaterial(light: number) {
 const TOPS = ['#e6ddd3', '#d6c7b6', '#a9825f', '#c9b39b'];
 const FABRIC = ['#5a2a3a', '#4a4f5a', '#6f5a48', '#2f3540', '#7a3b40'];
 const CHAIRS = ['#1f1a1e', '#2b2830', '#3a2a30', '#262a33'];
-const CLOTHES = ['#e8e2dc', '#2a3550', '#5f5b66', '#1d1a1f', '#b39a80', '#6e2a3a', '#9fb4cc', '#f2efe9', '#3c4a3a', '#24364f'];
-const SKIN = ['#e9c2a2', '#d09a78', '#a8714f', '#7a4a32', '#5a3624', '#f0cfb2'];
-const HAIR = ['#16100d', '#2b1d15', '#4a3020', '#1a1a1a', '#8a6a45', '#5a4636'];
+// Office clothes in Dubai: suits and shirts, blouses and dresses, the white kandura with a ghutra, the black
+// abaya with a shayla, headscarves in quiet colours.
+const SHIRTS = ['#f2efe9', '#dfe8f4', '#cfdcec', '#f0e2dc', '#ece6d8', '#fbfaf7'];
+const JACKETS = ['#1f2533', '#2a2d33', '#16151a', '#4a4d55', '#24364f', '#6b5a48', '#5a2a3a', '#3c3f46'];
+const TIES = ['#5a2a3a', '#24364f', '#1d1a1f', '#7a2e40'];
+const TROUSERS = ['#1d1f26', '#2a2d33', '#24364f', '#45484f', '#8a7a66', '#16151a'];
+const BLOUSES = ['#f2efe9', '#e9d6cf', '#cfdcec', '#7a2e40', '#2f5250', '#d9c3a0', '#1d1a1f', '#b8a3c4', '#c46a4a'];
+const SKIRTS = ['#1d1a1f', '#24364f', '#6e2a3a', '#8a7a66', '#3a3f4a', '#d9c3a0'];
+const SCARVES = ['#1a1618', '#d9c8b4', '#8a7a70', '#5a2a3a', '#2f3540', '#c9b8a8'];
+const KANDURA = ['#f4f2ec', '#efebe2', '#f7f6f2', '#e8e2d4'];
+const SHOES = ['#141114', '#2a1a12', '#3b2418', '#1d1a1f'];
+const SKIN = ['#e9c2a2', '#d09a78', '#b98361', '#a8714f', '#7a4a32', '#5a3624', '#f0cfb2'];
+const HAIR = ['#16100d', '#2b1d15', '#4a3020', '#1a1a1a', '#6a4a30', '#8a6a45', '#8c8780'];
 const SCREENS: [string, number][] = [
   ['#cfe0ff', 1.5],
   ['#ffe9d2', 1.3],
@@ -113,10 +134,51 @@ interface Bag {
   boxes: Part;
   screens: Part;
   glow: Part;
-  bodies: Part;
+  torsos: Part;
+  robes: Part;
+  limbs: Part;
   heads: Part;
+  caps: Part;
+  rings: Part;
   leaves: Part;
 }
+
+type Hair = 'short' | 'long' | 'bun' | 'ghutra' | 'shayla';
+type Pose = 'desk' | 'lap' | 'stand' | 'cup' | 'phone';
+/** How one person looks: colours already dimmed for the floor. */
+interface Look {
+  top: THREE.Color;
+  /** The shirt under an open jacket, and a tie on some. */
+  shirt?: THREE.Color;
+  tie?: THREE.Color;
+  legs: THREE.Color;
+  shoes: THREE.Color;
+  skin: THREE.Color;
+  /** Hair, or the headscarf's colour. */
+  hair: THREE.Color;
+  style: Hair;
+  /** Kandura or abaya: one long robe from the shoulders to the floor. */
+  robe?: THREE.Color;
+  /** A skirt or dress over the knees; the legs below it take `legs` (tights or skin). */
+  skirt?: THREE.Color;
+  /** Half the width of the shoulders (m), and the size of the person (1 ≈ 1.75 m). */
+  w: number;
+  k: number;
+}
+
+// Scratch objects for placing the parts of a person.
+const Q = new THREE.Quaternion();
+const QY = new THREE.Quaternion();
+const QB = new THREE.Quaternion();
+const QT = new THREE.Quaternion();
+const EU = new THREE.Euler();
+const DIR = new THREE.Vector3();
+const AX = new THREE.Vector3(1, 0, 0);
+const AY = new THREE.Vector3(0, 1, 0);
+const euler = (q: THREE.Quaternion): V3 => {
+  EU.setFromQuaternion(q, 'XYZ');
+  return [EU.x, EU.y, EU.z];
+};
 
 /**
  * Builds rooms into a bag. `f` dims the colours of a dark floor (its lights are low); screens and lamps
@@ -136,20 +198,170 @@ function builder(bag: Bag, y0: number, f: number, rnd: () => number) {
     put(bag.screens, [p[0], y0 + p[1], p[2]], [s[0], s[1], 1], hdr(hex, k * glowK), facing > 0 ? [-tilt, 0, 0] : [tilt, Math.PI, 0]);
   };
 
-  /** A head with hair on the back of it; `fx`, `fz` = where the face looks. */
-  const head = (x: number, y: number, z: number, fx: number, fz: number) => {
-    put(bag.heads, [x, y0 + y, z], [1, 1.08, 1], c(pick(SKIN)));
-    put(bag.heads, [x - fx * 0.028, y0 + y + 0.028, z - fz * 0.028], [1.07, 1.02, 1.07], c(pick(HAIR)));
+  /** Picks someone's clothes, skin and hair. */
+  const dress = (): Look => {
+    const r = rnd();
+    const skin = c(pick(SKIN));
+    const shoes = c(pick(SHOES));
+    const k = 0.93 + rnd() * 0.12;
+    if (r < 0.17) {
+      const robe = c(pick(KANDURA));
+      return { top: robe, robe, legs: robe, shoes, skin, hair: c(pick(KANDURA)), style: 'ghutra', w: 0.2, k };
+    }
+    if (r < 0.27) {
+      const robe = c('#17131a');
+      const scarf = c(rnd() < 0.8 ? '#17131a' : pick(SCARVES));
+      return { top: robe, robe, legs: robe, shoes, skin, hair: scarf, style: 'shayla', w: 0.18, k: k * 0.95 };
+    }
+    if (r < 0.63) {
+      const jacket = rnd() < 0.6;
+      const shirt = c(pick(SHIRTS));
+      return {
+        top: jacket ? c(pick(JACKETS)) : shirt,
+        shirt: jacket ? shirt : undefined,
+        tie: jacket && rnd() < 0.45 ? c(pick(TIES)) : undefined,
+        legs: c(pick(TROUSERS)),
+        shoes,
+        skin,
+        hair: c(pick(HAIR)),
+        style: 'short',
+        w: 0.205,
+        k,
+      };
+    }
+    const top = c(pick(BLOUSES));
+    const skirt = rnd() < 0.45 ? (rnd() < 0.4 ? top : c(pick(SKIRTS))) : undefined;
+    const scarf = rnd() < 0.2;
+    return {
+      top,
+      legs: skirt ? (rnd() < 0.5 ? c('#2a2226') : skin) : c(pick(TROUSERS)),
+      shoes,
+      skin,
+      hair: c(scarf ? pick(SCARVES) : pick(HAIR)),
+      style: scarf ? 'shayla' : rnd() < 0.6 ? 'long' : 'bun',
+      skirt,
+      w: 0.185,
+      k: k * 0.95,
+    };
   };
-  /** Someone sitting on a seat of the given height, facing along z (fz = ±1). */
-  const seated = (x: number, z: number, fz: number, seat = 0.46) => {
-    put(bag.bodies, [x, y0 + seat + 0.34, z], [1.1, 1, 0.78], c(pick(CLOTHES)), [0, fz > 0 ? 0 : Math.PI, 0]);
-    head(x, seat + 0.81, z + fz * 0.03, 0, fz);
+
+  /** A tapered limb from `a` (its wide end) to `b`. */
+  const limb = (a: V3, b: V3, r: number, col: THREE.Color) => {
+    DIR.set(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+    const len = DIR.length();
+    Q.setFromUnitVectors(AY, DIR.divideScalar(len || 1));
+    put(bag.limbs, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2], [r, len, r], col, euler(Q));
   };
-  /** Someone standing, turned by `yaw` (0 = facing +z). */
+
+  /**
+   * One person at `x`, `z`, facing `yaw` (0 = +z). Sitting poses: on a seat of height `seat`, hands on a
+   * desk of height `desk` or in the lap. Standing poses: arms down, a coffee, or on the phone.
+   */
+  const person = (x: number, z: number, yaw: number, pose: Pose, seat = 0.46, desk = 0.76) => {
+    const L = dress();
+    const { k, w } = L;
+    const sit = pose === 'desk' || pose === 'lap';
+    const hip = sit ? seat + 0.02 : 0.9 * k;
+    const lean = pose === 'desk' ? 0.13 : pose === 'lap' ? -0.1 : 0;
+    const cs = Math.cos(yaw);
+    const sn = Math.sin(yaw);
+    /** Local (right, up, forward) → world. */
+    const at = (lx: number, ly: number, lz: number): V3 => [x + lx * cs + lz * sn, y0 + ly, z - lx * sn + lz * cs];
+    const cl = Math.cos(lean);
+    const sl = Math.sin(lean);
+    /** A point on the (leaning) upper body, measured from the hips. */
+    const up = (lx: number, ly: number, lz: number) => at(lx, hip + ly * cl - lz * sl, ly * sl + lz * cl);
+    QY.setFromAxisAngle(AY, yaw);
+    QB.copy(QY).multiply(Q.setFromAxisAngle(AX, lean));
+    const body = euler(QB);
+    /** The upper body's turn, tipped forward (+) or back (−) by `a` more. */
+    const tilt = (a: number) => euler(QT.copy(QB).multiply(Q.setFromAxisAngle(AX, a)));
+    const flat: V3 = [0, yaw, 0];
+
+    // Legs and feet.
+    if (sit) {
+      const thigh = L.robe || L.skirt ? 0.085 : 0.072;
+      for (const e of [-1, 1]) {
+        const knee = at(e * 0.11, seat + 0.08, 0.44 * k);
+        limb(at(e * 0.1, seat + 0.08, 0), knee, thigh, L.skirt ?? L.legs);
+        limb(knee, at(e * 0.11, L.robe ? 0.06 : 0.1, 0.48 * k), L.robe ? 0.08 : 0.052, L.legs);
+        put(bag.boxes, at(e * 0.11, 0.04, 0.53 * k), [0.095, 0.075, 0.22], L.shoes, flat);
+      }
+    } else if (L.robe) {
+      put(bag.robes, at(0, 0.03, 0), [0.26 * k, 1.42 * k, 0.19 * k], L.robe, flat);
+      for (const e of [-1, 1]) put(bag.boxes, at(e * 0.1, 0.035, 0.08), [0.09, 0.07, 0.2], L.shoes, flat);
+    } else {
+      if (L.skirt) put(bag.robes, at(0, 0.5 * k, 0), [0.2 * k, 0.48 * k, 0.15 * k], L.skirt, flat);
+      for (const e of [-1, 1]) {
+        limb(at(e * 0.095, hip + 0.04, 0), at(e * 0.1, 0.09, 0.01), L.skirt ? 0.05 : 0.07, L.legs);
+        put(bag.boxes, at(e * 0.1, 0.04, 0.05), [0.09, 0.08, 0.24], L.shoes, flat);
+      }
+    }
+
+    // Upper body (a standing robe already is one), the shirt and tie under a jacket, the neck.
+    if (!(L.robe && !sit)) put(bag.torsos, up(0, 0, 0), [w * k, 0.58 * k, w * k * 0.62], L.top, body);
+    const front = w * k * 0.6;
+    if (L.shirt) put(bag.boxes, up(0, 0.43 * k, front * 0.93), [0.075, 0.2 * k, 0.012], L.shirt, tilt(-0.1));
+    if (L.tie) put(bag.boxes, up(0, 0.38 * k, front * 0.97), [0.032, 0.2 * k, 0.012], L.tie, tilt(-0.08));
+    limb(up(0, 0.66 * k, 0), up(0, 0.54 * k, 0), 0.047, L.style === 'shayla' ? L.hair : L.skin);
+
+    // Head and hair.
+    const hy = 0.77 * k;
+    const hr = 0.1 * k;
+    const near = (dy: number, dz: number) => up(0, hy + dy, 0.012 + dz);
+    put(bag.heads, near(0, 0), [hr * 0.92, hr * 1.13, hr * 1.02], L.skin, body);
+    if (L.style === 'short') {
+      put(bag.caps, near(0.012, -0.004), [hr * 0.98, hr * 1.06, hr * 1.1], L.hair, tilt(-0.38));
+    } else if (L.style === 'long' || L.style === 'bun') {
+      put(bag.caps, near(0.008, -0.004), [hr, hr * 1.1, hr * 1.12], L.hair, tilt(-0.3));
+      if (L.style === 'long') put(bag.boxes, near(-0.11 * k, -0.07 * k), [0.19 * k, 0.24 * k, 0.07], L.hair, tilt(0.08));
+      else put(bag.heads, near(0.06 * k, -0.1 * k), [0.048, 0.048, 0.048], L.hair);
+    } else {
+      // A headscarf over the head down to the jaw, falling over the back and the shoulders.
+      const ghutra = L.style === 'ghutra';
+      put(bag.caps, near(-0.004, -0.004), [hr * 1.1, hr * 1.2, hr * 1.18], L.hair, tilt(ghutra ? -0.12 : 0.02));
+      put(bag.boxes, near(-0.15 * k, -0.075 * k), [ghutra ? 0.27 : 0.23, 0.26 * k, 0.07], L.hair, tilt(0.12));
+      if (ghutra) put(bag.rings, near(0.085 * k, -0.012), [0.082 * k, 0.082 * k, 0.082 * k], c('#141114'), tilt(Math.PI / 2 - 0.25));
+      else put(bag.robes, up(0, 0.44 * k, -0.01), [w * k * 1.08, 0.24 * k, w * k * 0.8], L.hair, body);
+    }
+
+    // Arms and hands.
+    const sleeve = L.robe ?? L.top;
+    for (const e of [-1, 1]) {
+      let el: V3;
+      let hand: V3;
+      if (pose === 'desk') {
+        el = at(e * (w * k + 0.03), seat + 0.25, 0.12);
+        hand = at(e * 0.14, desk + 0.035, 0.4);
+      } else if (pose === 'lap') {
+        el = at(e * (w * k + 0.02), seat + 0.23, 0.04);
+        hand = at(e * 0.12, seat + 0.17, 0.3);
+      } else if (e > 0 && pose === 'cup') {
+        el = at(w * k + 0.04, 1.12 * k, 0);
+        hand = at(w * k - 0.03, 1.15 * k, 0.24);
+      } else if (e > 0 && pose === 'phone') {
+        el = at(w * k + 0.08, 1.24 * k, 0.06);
+        hand = at(w * k - 0.02, 1.6 * k, 0.04);
+      } else {
+        el = at(e * (w * k + 0.045), 1.13 * k, -0.01);
+        hand = at(e * (w * k + 0.035), 0.84 * k, 0.03);
+      }
+      // The shoulder end starts inside the torso, so the round of the shoulder shows, not a cut tube.
+      limb(up(e * w * k * 0.8, 0.47 * k, 0), el, 0.05, sleeve);
+      limb(el, hand, 0.04, sleeve);
+      put(bag.boxes, hand, [0.05, 0.03, 0.075], L.skin, flat);
+      if (e > 0 && pose === 'cup') limb([hand[0], hand[1] + 0.06, hand[2]], [hand[0], hand[1] - 0.03, hand[2]], 0.034, c('#f2efe9'));
+      if (e > 0 && pose === 'phone') put(bag.boxes, at(w * k - 0.06, 1.62 * k, 0.04), [0.015, 0.14, 0.07], c(BLACK), flat);
+    }
+  };
+
+  /** Someone sitting on a seat of the given height, facing along z (fz = ±1), hands on the desk or in the lap. */
+  const seated = (x: number, z: number, fz: number, seat = 0.46, hands: 'desk' | 'lap' = 'desk', desk = 0.76) =>
+    person(x, z, fz > 0 ? 0 : Math.PI, hands, seat, desk);
+  /** Someone standing, turned by `yaw` (0 = facing +z): arms down, a coffee, or on the phone. */
   const standing = (x: number, z: number, yaw: number) => {
-    put(bag.bodies, [x, y0 + 0.74, z], [1.05, 2.05, 0.75], c(pick(CLOTHES)), [0, yaw, 0]);
-    head(x, 1.56, z, Math.sin(yaw), Math.cos(yaw));
+    const r = rnd();
+    person(x, z, yaw, r < 0.5 ? 'stand' : r < 0.8 ? 'cup' : 'phone');
   };
   /** An office chair whose back is on the `s` side (±1 along z). */
   const chair = (x: number, z: number, s: number, col = c(pick(CHAIRS))) => {
@@ -170,7 +382,7 @@ function builder(bag: Bag, y0: number, f: number, rnd: () => number) {
     for (const e of [-1, 1]) box([x + e * 0.98, 0.5, z], [0.16, 0.3, 0.85], col);
     box([x, 0.4, z + fz * 0.95], [1.0, 0.04, 0.55], c(WALNUT, 1.3));
     box([x, 0.2, z + fz * 0.95], [0.7, 0.36, 0.35], c(METAL));
-    for (let i = 0; i < people; i++) seated(x + (i - (people - 1) / 2) * 0.68, z + fz * 0.05, fz, 0.44);
+    for (let i = 0; i < people; i++) seated(x + (i - (people - 1) / 2) * 0.68, z + fz * 0.05, fz, 0.44, 'lap');
   };
   /** A desk for one; the person sits on the `s` side (±1 along z), the screen on the other. */
   const desk = (x: number, z: number, s: number, top: THREE.Color, busy: boolean) => {
@@ -208,7 +420,7 @@ function builder(bag: Bag, y0: number, f: number, rnd: () => number) {
         const cz = z + s * 0.85;
         chair(cx, cz, s);
         if (rnd() < busy) {
-          seated(cx, cz - s * 0.04, -s);
+          seated(cx, cz - s * 0.04, -s, 0.46, 'desk', 0.77);
           if (rnd() < 0.7) {
             box([cx, 0.775, z + s * 0.28], [0.32, 0.015, 0.22], c(BLACK));
             screen([cx, 0.88, z + s * 0.39], [0.31, 0.2], -s, 0.25);
@@ -314,7 +526,7 @@ function furnishOffice(bag: Bag, top: number) {
     B.box([ax, 0.62, 3.6], [0.75, 0.42, 0.16], col);
   }
   B.box([TOWER_W / 2 - 1.3, 0.3, 4.5], [0.5, 0.04, 0.5], B.c(WALNUT, 1.3));
-  B.seated(TOWER_W / 2 - 1.85, 3.95, 1, 0.44);
+  B.seated(TOWER_W / 2 - 1.85, 3.95, 1, 0.44, 'lap');
   B.standing(TOWER_W / 2 - 2.6, -3.9, Math.PI);
   B.plant(TOWER_W / 2 - 0.45, -4.9);
   B.plant(TOWER_W / 2 - 0.5, 4.95);
@@ -340,7 +552,18 @@ export function Offices({ kinds, top, deskImage }: Props) {
   useEffect(() => () => Object.values(mats).forEach((m) => m.dispose()), [mats]);
 
   const bag = useMemo(() => {
-    const b: Bag = { boxes: part(), screens: part(), glow: part(), bodies: part(), heads: part(), leaves: part() };
+    const b: Bag = {
+      boxes: part(),
+      screens: part(),
+      glow: part(),
+      torsos: part(),
+      robes: part(),
+      limbs: part(),
+      heads: part(),
+      caps: part(),
+      rings: part(),
+      leaves: part(),
+    };
     kinds.forEach((k, l) => {
       if (k === 'floor' || k === 'hidden' || k === 'extra') for (const w of [0, 1]) furnishWing(b, k, l, w);
     });
@@ -351,8 +574,12 @@ export function Offices({ kinds, top, deskImage }: Props) {
   return (
     <group>
       <Instanced items={bag.boxes.items} colors={bag.boxes.colors} material={mats.solid} />
-      <Instanced items={bag.bodies.items} colors={bag.bodies.colors} geometry={BODY} material={mats.solid} />
+      <Instanced items={bag.torsos.items} colors={bag.torsos.colors} geometry={TORSO} material={mats.solid} />
+      <Instanced items={bag.robes.items} colors={bag.robes.colors} geometry={ROBE} material={mats.solid} />
+      <Instanced items={bag.limbs.items} colors={bag.limbs.colors} geometry={LIMB} material={mats.solid} />
       <Instanced items={bag.heads.items} colors={bag.heads.colors} geometry={HEAD} material={mats.solid} />
+      <Instanced items={bag.caps.items} colors={bag.caps.colors} geometry={CAP} material={mats.solid} />
+      <Instanced items={bag.rings.items} colors={bag.rings.colors} geometry={RING} material={mats.solid} />
       <Instanced items={bag.leaves.items} colors={bag.leaves.colors} geometry={LEAF} material={mats.solid} />
       <Instanced items={bag.screens.items} colors={bag.screens.colors} geometry={PLANE} material={mats.screen} />
       <Instanced items={bag.glow.items} colors={bag.glow.colors} material={mats.screen} />
@@ -361,44 +588,79 @@ export function Offices({ kinds, top, deskImage }: Props) {
   );
 }
 
+/** Mat around the picture inside the frame, as a share of the frame's shorter side. */
+const MAT = 0.09;
+const MAT_COLOR = '#1e1218';
+
 /**
- * The framed picture on the desk of Office 902 (panel: Settings). Any shape: it is fitted inside
- * DESK_FRAME's w × h and stands on the desk, leaning back a little, facing the lift.
+ * Draws the picture onto an opaque canvas the colour of the mat, with a margin all round: no transparent
+ * edges to fringe when the graphics card blends its smaller copies (mipmaps), nothing touching the frame,
+ * and a sharp copy at the size it is seen at (up to 2048 pixels on the long side, larger pictures scaled
+ * down with the browser's best filter).
+ */
+function matted(img: HTMLImageElement | ImageBitmap, frameAspect: number) {
+  const long = 2048;
+  const cw = frameAspect >= 1 ? long : Math.round(long * frameAspect);
+  const ch = frameAspect >= 1 ? Math.round(long / frameAspect) : long;
+  const cv = document.createElement('canvas');
+  cv.width = cw;
+  cv.height = ch;
+  const g = cv.getContext('2d');
+  if (!g) return null;
+  g.fillStyle = MAT_COLOR;
+  g.fillRect(0, 0, cw, ch);
+  const pad = Math.min(cw, ch) * MAT;
+  const k = Math.min((cw - 2 * pad) / img.width, (ch - 2 * pad) / img.height);
+  const w = img.width * k;
+  const h = img.height * k;
+  g.imageSmoothingEnabled = true;
+  g.imageSmoothingQuality = 'high';
+  g.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
+  return cv;
+}
+
+/**
+ * The framed picture on the desk of Office 902 (panel: Settings). Any shape: the frame takes the picture's
+ * shape inside DESK_FRAME's w × h, with a dark mat round it, and stands on the desk, leaning back a
+ * little, facing the lift.
  */
 function DeskPicture({ y, src }: { y: number; src: string }) {
   const invalidate = useThree((s) => s.invalidate);
-  const [tex, setTex] = useState<THREE.Texture | null>(null);
+  const maxAniso = useThree((s) => s.gl.capabilities.getMaxAnisotropy());
+  const [pic, setPic] = useState<{ tex: THREE.Texture; aspect: number } | null>(null);
   useEffect(() => {
     if (!src) return;
     let alive = true;
-    let loaded: THREE.Texture | null = null;
-    const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin('anonymous');
-    loader.load(
-      src,
-      (t) => {
-        if (!alive) {
-          t.dispose();
-          return;
-        }
-        t.colorSpace = THREE.SRGBColorSpace;
-        t.anisotropy = 8;
-        loaded = t;
-        setTex(t);
-        invalidate();
-      },
-      undefined,
-      () => undefined,
-    );
+    let made: THREE.Texture | null = null;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.decoding = 'async';
+    img.onload = () => {
+      if (!alive || !img.width || !img.height) return;
+      // The frame's shape: the picture's own plus the mat, kept inside DESK_FRAME.
+      const aspect = Math.min(3, Math.max(1 / 3, img.width / img.height));
+      const cv = matted(img, aspect);
+      if (!cv) return;
+      const t = new THREE.CanvasTexture(cv);
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = maxAniso;
+      t.minFilter = THREE.LinearMipmapLinearFilter;
+      t.magFilter = THREE.LinearFilter;
+      t.generateMipmaps = true;
+      made = t;
+      setPic({ tex: t, aspect });
+      invalidate();
+    };
+    img.src = src;
     return () => {
       alive = false;
-      loaded?.dispose();
-      setTex(null);
+      img.onload = null;
+      made?.dispose();
+      setPic(null);
     };
-  }, [src, invalidate]);
+  }, [src, invalidate, maxAniso]);
 
-  const img = tex?.image as { width?: number; height?: number } | undefined;
-  const aspect = img?.width && img?.height ? img.width / img.height : DESK_FRAME.w / DESK_FRAME.h;
+  const aspect = pic?.aspect ?? DESK_FRAME.w / DESK_FRAME.h;
   const w = aspect > DESK_FRAME.w / DESK_FRAME.h ? DESK_FRAME.w : DESK_FRAME.h * aspect;
   const h = w / aspect;
   const border = 0.045;
@@ -408,19 +670,14 @@ function DeskPicture({ y, src }: { y: number; src: string }) {
       <mesh scale={[w + border, h + border, 0.025]} geometry={BOX}>
         <meshStandardMaterial color="#1c1116" roughness={0.4} metalness={0.6} />
       </mesh>
-      {/* A thin gold edge, a dark mat (a logo with a clear background sits on it), the picture */}
+      {/* A thin gold edge, then the picture on its mat (or the bare mat while it loads) */}
       <mesh position={[0, 0, 0.013]} scale={[w + border * 0.45, h + border * 0.45, 1]} geometry={PLANE}>
         <meshStandardMaterial color="#c9a46a" roughness={0.35} metalness={0.8} />
       </mesh>
       <mesh position={[0, 0, 0.0138]} scale={[w, h, 1]} geometry={PLANE}>
-        <meshBasicMaterial color="#1e1218" />
+        {/* Keyed by the picture: a new map needs a new material (its shader is built for it). */}
+        {pic ? <meshBasicMaterial key={pic.tex.uuid} map={pic.tex} toneMapped /> : <meshBasicMaterial color={MAT_COLOR} />}
       </mesh>
-      {tex && (
-        <mesh position={[0, 0, 0.0146]} scale={[w, h, 1]} geometry={PLANE}>
-          {/* Keyed by the picture: a new map needs a new material (its shader is built for it). */}
-          <meshBasicMaterial key={tex.uuid} map={tex} transparent toneMapped />
-        </mesh>
-      )}
       {/* The stand behind it */}
       <mesh position={[0, -h * 0.12, -0.11]} rotation={[0.45, 0, 0]} scale={[0.05, h * 0.8, 0.015]} geometry={BOX}>
         <meshStandardMaterial color="#1c1116" roughness={0.5} metalness={0.5} />
